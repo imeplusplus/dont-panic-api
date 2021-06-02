@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,24 +10,17 @@ import (
 
 	"github.com/rs/zerolog"
 	gremcos "github.com/supplyon/gremcos"
-	"github.com/supplyon/gremcos/api"
+
+	"github.com/imeplusplus/dont-panic-api/handler"
 )
 
-type Subject struct {
-	Id         string   `json:"id"`
-	Name       string   `json:"name"`
-	Type       string   `json:"type"`
-	References []string `json:"references"`
-	Difficulty int      `json:"difficulty"`
+type App struct {
+	Router *mux.Router
+	Cosmos gremcos.Cosmos
+	Logger zerolog.Logger
 }
 
-var subjects = []Subject{}
-var cosmos gremcos.Cosmos
-var logger zerolog.Logger
-var err error
-
-func main() {
-
+func (app *App) Initialize() {
 	host := os.Getenv("CDB_HOST")
 	username := os.Getenv("CDB_USERNAME")
 	password := os.Getenv("CDB_KEY")
@@ -37,8 +29,8 @@ func main() {
 	fmt.Println(username)
 	fmt.Println(password)
 
-	logger = zerolog.New(os.Stdout).Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat}).With().Timestamp().Logger()
-	cosmos, err = gremcos.New(host,
+	app.Logger = zerolog.New(os.Stdout).Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat}).With().Timestamp().Logger()
+	app.Cosmos, err = gremcos.New(host,
 		gremcos.WithAuth(username, password),
 		gremcos.WithLogger(logger),
 		gremcos.NumMaxActiveConnections(10),
@@ -46,79 +38,64 @@ func main() {
 		gremcos.MetricsPrefix("myservice"),
 	)
 
-	if err != nil {
-		return
-	}
+	app.Router = mux.NewRouter()
+	app.setRouters()
+}
 
-	r := mux.NewRouter()
-	usersR := r.PathPrefix("/api/subject").Subrouter()
-	usersR.Path("").Methods(http.MethodGet).HandlerFunc(getAllSubjects)
-	usersR.Path("").Methods(http.MethodPost).HandlerFunc(createSubject)
-	usersR.Path("/{id}").Methods(http.MethodGet).HandlerFunc(getSubjectByID)
-	usersR.Path("/{id}").Methods(http.MethodPut).HandlerFunc(updateSubject)
-	usersR.Path("/{id}").Methods(http.MethodDelete).HandlerFunc(deleteSubject)
-	fmt.Println("Start listening")
+func (app *App) setRouters() {
+	// Routing for subjects
+	app.Get("/api/subject", app.handleRequest(handler.GetAllSubjects))
+	app.Post("/api/subject", app.handleRequest(handler.CreateSubject))
+	app.Get("/api/subject/{name}", app.handleRequest(handler.GetSubjectByName))
+	app.Put("/papi/subject{name}", app.handleRequest(handler.UpdateSubject))
+	app.Delete("/papi/subject{name}", app.handleRequest(handler.DeleteSubject))
+}
+
+// Get wraps the router for GET method
+func (app *App) Get(path string, f func(w http.ResponseWriter, r *http.Request)) {
+	app.Router.HandleFunc(path, f).Methods("GET")
+}
+
+// Post wraps the router for POST method
+func (app *App) Post(path string, f func(w http.ResponseWriter, r *http.Request)) {
+	app.Router.HandleFunc(path, f).Methods("POST")
+}
+
+// Put wraps the router for PUT method
+func (app *App) Put(path string, f func(w http.ResponseWriter, r *http.Request)) {
+	app.Router.HandleFunc(path, f).Methods("PUT")
+}
+
+// Delete wraps the router for DELETE method
+func (app *App) Delete(path string, f func(w http.ResponseWriter, r *http.Request)) {
+	app.Router.HandleFunc(path, f).Methods("DELETE")
+}
+
+type RequestHandlerFunction func(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request)
+
+func (app *App) handleRequest(handler RequestHandlerFunction) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		handler(app.Cosmos, w, r)
+	}
+}
+
+// Run the app on it's router
+func (app *App) Run(host string) {
+	fmt.Println(http.ListenAndServe(host, app.Router))
+}
+
+var cosmos gremcos.Cosmos
+var logger zerolog.Logger
+var err error
+
+func main() {
+
+	app := App{}
+	app.Initialize()
 
 	listenAddr := ":8080"
 	if val, ok := os.LookupEnv("FUNCTIONS_CUSTOMHANDLER_PORT"); ok {
 		listenAddr = ":" + val
 	}
-
-	fmt.Println(http.ListenAndServe(listenAddr, r))
-}
-
-func getAllSubjects(w http.ResponseWriter, r *http.Request) {
-
-	g := api.NewGraph("g")
-	query := g.V()
-
-	res, err := cosmos.ExecuteQuery(query)
-
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to execute a gremlin command")
-		return
-	}
-
-	responses := api.ResponseArray(res)
-	values, err := responses.ToValues()
-	if err == nil {
-		logger.Info().Msgf("Received Values: %v", values)
-	}
-
-	println(responses)
-
-	w.Header().Add("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(responses); err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-}
-
-func getSubjectByID(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Not implemented")
-}
-
-func updateSubject(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Not implemented")
-}
-
-func deleteSubject(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Not implemented")
-}
-
-func createSubject(w http.ResponseWriter, r *http.Request) {
-	subject := Subject{}
-	if err := json.NewDecoder(r.Body).Decode(&subject); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	subjects = append(subjects, subject)
-	response, err := json.Marshal(&subject)
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	w.Write(response)
+	app.Run(listenAddr)
 }
