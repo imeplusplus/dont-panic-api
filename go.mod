@@ -1,4 +1,4 @@
-module github.com/IMEplusplus/dont-panic-api
+module github.com/imeplusplus/dont-panic-api
 
 go 1.16
 
