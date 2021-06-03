@@ -7,15 +7,9 @@ import (
 
 	gremcos "github.com/supplyon/gremcos"
 	"github.com/supplyon/gremcos/api"
-)
 
-type Subject struct {
-	Id         string   `json:"id"`
-	Name       string   `json:"name"`
-	Type       string   `json:"type"`
-	References []string `json:"references"`
-	Difficulty int      `json:"difficulty"`
-}
+	"github.com/imeplusplus/dont-panic-api/app/model"
+)
 
 func GetAllSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 
@@ -58,7 +52,7 @@ func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 }
 
 func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-	subject := Subject{}
+	subject := model.Subject{}
 	if err := json.NewDecoder(r.Body).Decode(&subject); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
