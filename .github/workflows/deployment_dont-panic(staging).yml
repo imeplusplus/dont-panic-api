@@ -19,6 +19,10 @@ jobs:
     - name: 'Checkout GitHub Action'
       uses: actions/checkout@v2
 
+    - name: 'Build'
+      run: go build .
+      shell: bash
+
     - name: 'Run Azure Functions Action'
       uses: Azure/functions-action@v1
       id: fa
