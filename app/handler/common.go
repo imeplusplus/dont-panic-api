@@ -22,3 +22,13 @@ func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 func respondError(w http.ResponseWriter, code int, message string) {
 	respondJSON(w, code, map[string]string{"error": message})
 }
+
+func JSONToString(jObject interface{}) string {
+	str, err := json.Marshal(jObject)
+
+	if err == nil {
+		return (string(str))
+	}
+
+	return ""
+}

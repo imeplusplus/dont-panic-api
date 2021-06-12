@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -23,17 +24,17 @@ func GetAllSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	responses := api.ResponseArray(res)
-	values, err := responses.ToValues()
+	response := api.ResponseArray(res)
+	vertices, err := response.ToVertices()
+
 	if err == nil {
-		fmt.Println(values)
-		//logger.Info().Msgf("Received Values: %v", values)
+		fmt.Println(vertices)
 	}
 
-	println(responses)
+	subjects := VerticesToSubjects(vertices)
 
 	w.Header().Add("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(responses); err != nil {
+	if err := json.NewEncoder(w).Encode(subjects); err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -66,4 +67,38 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 	}
 	w.WriteHeader(http.StatusCreated)
 	w.Write(response)
+}
+
+func VerticesToSubjects(vertices []api.Vertex) []model.Subject {
+	subjects := []model.Subject{}
+
+	for _, v := range vertices {
+		subject, err := VertexToSubject(v)
+		if err == nil {
+			subjects = append(subjects, subject)
+		}
+	}
+
+	fmt.Println(JSONToString(subjects))
+
+	return subjects
+}
+
+func VertexToSubject(vertex api.Vertex) (model.Subject, error) {
+	var subject model.Subject
+
+	if vertex.Label != "subject" {
+		return subject, errors.New("Vertex is not a subject")
+	}
+
+	subject.Id = vertex.ID
+
+	properties := vertex.Properties
+
+	subject.Category = properties["category"][0].Value.AsString()
+	subject.Name = properties["name"][0].Value.AsString()
+	subject.Pk = properties["pk"][0].Value.AsString()
+	//subject.Difficulty = int(properties["Difficulty"][0].Value.AsInt32())
+
+	return subject, nil
 }
