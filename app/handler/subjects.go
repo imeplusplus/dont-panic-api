@@ -52,17 +52,24 @@ func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 
 func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	subject := model.Subject{}
-	if err := json.NewDecoder(r.Body).Decode(&subject); err != nil {
+	var err error
+	if err = json.NewDecoder(r.Body).Decode(&subject); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	//subjects = append(subjects, subject)
-	response, err := json.Marshal(&subject)
+
+	subject, err = dbOperations.InsertSubject(cosmos, subject)
+
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(response)
+	if err := json.NewEncoder(w).Encode(subject); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

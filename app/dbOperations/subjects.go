@@ -6,6 +6,7 @@ import (
 
 	gremcos "github.com/supplyon/gremcos"
 	"github.com/supplyon/gremcos/api"
+	"github.com/supplyon/gremcos/interfaces"
 
 	"github.com/imeplusplus/dont-panic-api/app/model"
 )
@@ -29,7 +30,7 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 		return nil, err
 	}
 
-	subjects := VerticesToSubjects(vertices)
+	subjects := verticesToSubjects(vertices)
 	return subjects, nil
 }
 
@@ -45,13 +46,36 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 		return subject, err
 	}
 
+	return getSubjectFromResponse(res)
+}
+
+func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
+	g := api.NewGraph("g")
+	query := g.AddV("subject").
+		Property("name", subject.Name).
+		Property("difficulty", subject.Difficulty).
+		Property("category", subject.Category).
+		Property("partitionKey", "subject")
+
+	res, err := cosmos.ExecuteQuery(query)
+	if err != nil {
+		fmt.Println("Failed to execute a gremling command")
+		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		return subject, err
+	}
+
+	return getSubjectFromResponse(res)
+}
+
+func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
+	var subject model.Subject
 	response := api.ResponseArray(res)
 	vertices, err := response.ToVertices()
 	if len(vertices) == 0 {
 		return subject, errors.New("Vertex is not a subject")
 	}
 
-	subject, err = VertexToSubject(vertices[0])
+	subject, err = vertexToSubject(vertices[0])
 	if err != nil {
 		return subject, err
 	}
@@ -59,11 +83,11 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 	return subject, nil
 }
 
-func VerticesToSubjects(vertices []api.Vertex) []model.Subject {
+func verticesToSubjects(vertices []api.Vertex) []model.Subject {
 	subjects := []model.Subject{}
 
 	for _, v := range vertices {
-		subject, err := VertexToSubject(v)
+		subject, err := vertexToSubject(v)
 		if err == nil {
 			subjects = append(subjects, subject)
 		}
@@ -72,7 +96,7 @@ func VerticesToSubjects(vertices []api.Vertex) []model.Subject {
 	return subjects
 }
 
-func VertexToSubject(vertex api.Vertex) (model.Subject, error) {
+func vertexToSubject(vertex api.Vertex) (model.Subject, error) {
 	var subject model.Subject
 
 	if vertex.Label != "subject" {
@@ -85,8 +109,8 @@ func VertexToSubject(vertex api.Vertex) (model.Subject, error) {
 
 	subject.Category = properties["category"][0].Value.AsString()
 	subject.Name = properties["name"][0].Value.AsString()
-	subject.Pk = properties["pk"][0].Value.AsString()
-	//subject.Difficulty = int(properties["Difficulty"][0].Value.AsInt32())
+	subject.PartitionKey = properties["partitionKey"][0].Value.AsString()
+	subject.Difficulty = int(properties["difficulty"][0].Value.AsInt32())
 
 	return subject, nil
 }
