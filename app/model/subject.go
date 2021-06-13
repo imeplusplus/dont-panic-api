@@ -6,5 +6,5 @@ type Subject struct {
 	References []string `json:"references"`
 	Difficulty int      `json:"difficulty"`
 	Category   string   `json:"category"`
-	Pk         string   `json:"pk"`
+	Pk         string   `json:"partitionKey"`
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	gremcos "github.com/supplyon/gremcos"
 	"github.com/supplyon/gremcos/api"
 
@@ -13,9 +14,8 @@ import (
 )
 
 func GetAllSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-
 	g := api.NewGraph("g")
-	query := g.V()
+	query := g.V().HasLabel("subject")
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
@@ -41,7 +41,37 @@ func GetAllSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Reques
 }
 
 func GetSubjectByName(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Not implemented")
+	vars := mux.Vars(r)
+
+	g := api.NewGraph("g")
+	query := g.V().HasLabel("subject").Has("name", vars["name"])
+
+	res, err := cosmos.ExecuteQuery(query)
+	if err != nil {
+		fmt.Println("Failed to execute a gremling command")
+		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		return
+	}
+
+	response := api.ResponseArray(res)
+	vertices, err := response.ToVertices()
+
+	if err == nil {
+		fmt.Println(vertices)
+	}
+
+	var subject model.Subject
+	if len(vertices) == 0 {
+		return
+	}
+
+	subject, _ = VertexToSubject(vertices[0])
+
+	w.Header().Add("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(subject); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
