@@ -57,6 +57,10 @@ func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 		Property("category", subject.Category).
 		Property("partitionKey", "subject")
 
+	for _, r := range subject.References {
+		query = query.PropertyList("references", r)
+	}
+
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
 		fmt.Println("Failed to execute a gremling command")
@@ -111,6 +115,9 @@ func vertexToSubject(vertex api.Vertex) (model.Subject, error) {
 	subject.Name = properties["name"][0].Value.AsString()
 	subject.PartitionKey = properties["partitionKey"][0].Value.AsString()
 	subject.Difficulty = int(properties["difficulty"][0].Value.AsInt32())
+	for _, p := range properties["references"] {
+		subject.References = append(subject.References, p.Value.AsString())
+	}
 
 	return subject, nil
 }
