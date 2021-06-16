@@ -43,7 +43,29 @@ func GetSubjectByName(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Requ
 }
 
 func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Not implemented")
+	vars := mux.Vars(r)
+
+	subject := model.Subject{}
+	var err error
+	if err = json.NewDecoder(r.Body).Decode(&subject); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	subject, err = dbOperations.UpdateSubject(cosmos, subject, vars["name"])
+
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(subject); err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {

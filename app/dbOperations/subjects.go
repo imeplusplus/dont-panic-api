@@ -50,16 +50,16 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 }
 
 func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
-	g := api.NewGraph("g")
-	query := g.AddV("subject").
-		Property("name", subject.Name).
-		Property("difficulty", subject.Difficulty).
-		Property("category", subject.Category).
-		Property("partitionKey", "subject")
+	_, err := GetSubjectByName(cosmos, subject.Name)
 
-	for _, r := range subject.References {
-		query = query.PropertyList("references", r)
+	if err == nil {
+		return model.Subject{}, errors.New("There is already a subject with this name")
 	}
+
+	g := api.NewGraph("g")
+
+	query := g.AddV("subject").Property("partitionKey", "subject")
+	query = addVertexProperties(query, subject)
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
@@ -69,6 +69,46 @@ func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 	}
 
 	return getSubjectFromResponse(res)
+}
+
+func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (model.Subject, error) {
+	oldSubject, err := GetSubjectByName(cosmos, name)
+
+	fmt.Print("Old subject: ", oldSubject, "\n\n")
+	fmt.Print("Subject: ", subject, "\n\n\n")
+
+	if err != nil {
+		return model.Subject{}, errors.New("There is no subject with this name")
+	}
+
+	g := api.NewGraph("g")
+	query := addVertexProperties(g.VByStr(oldSubject.Id), subject)
+
+	res, err := cosmos.ExecuteQuery(query)
+	if err != nil {
+		fmt.Println("Failed to execute a gremling command")
+		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		return subject, err
+	}
+
+	return getSubjectFromResponse(res)
+}
+
+func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interfaces.Vertex {
+	vertex = vertex.
+		Property("name", subject.Name).
+		Property("difficulty", subject.Difficulty).
+		Property("category", subject.Category)
+
+	for i, r := range subject.References {
+		if i == 0 {
+			vertex = vertex.Property("references", r)
+		} else {
+			vertex = vertex.PropertyList("references", r)
+		}
+	}
+
+	return vertex
 }
 
 func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
