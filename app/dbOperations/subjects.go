@@ -94,6 +94,15 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (m
 	return getSubjectFromResponse(res)
 }
 
+func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
+	g := api.NewGraph("g")
+	query := g.V().HasLabel("subject").Has("name", name).Drop()
+
+	_, err := cosmos.ExecuteQuery(query)
+
+	return err
+}
+
 func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", subject.Name).

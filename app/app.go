@@ -52,7 +52,7 @@ func (app *App) setRouters() {
 	// Routing for subjects
 	app.Get("/api/subjects", app.handleRequest(handler.GetSubjects))
 	app.Post("/api/subjects", app.handleRequest(handler.CreateSubject))
-	app.Get("/api/subjects/{name}", app.handleRequest(handler.GetSubjectByName))
+	app.Get("/api/subjects/{name}", app.handleRequest(handler.GetSubject))
 	app.Put("/api/subjects/{name}", app.handleRequest(handler.UpdateSubject))
 	app.Delete("/api/subjects/{name}", app.handleRequest(handler.DeleteSubject))
 }

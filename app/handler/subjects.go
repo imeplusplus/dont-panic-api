@@ -16,6 +16,8 @@ func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) 
 	subjects, err := dbOperations.GetSubjects(cosmos)
 
 	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -26,12 +28,14 @@ func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func GetSubjectByName(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
+func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	subject, err := dbOperations.GetSubjectByName(cosmos, vars["name"])
 
 	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -61,7 +65,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusAccepted)
 	if err := json.NewEncoder(w).Encode(subject); err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -69,7 +73,18 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 }
 
 func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Not implemented")
+	vars := mux.Vars(r)
+
+	err := dbOperations.DeleteSubject(cosmos, vars["name"])
+
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
@@ -80,7 +95,7 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	subject, err = dbOperations.InsertSubject(cosmos, subject)
+	subject, err = dbOperations.CreateSubject(cosmos, subject)
 
 	if err != nil {
 		fmt.Println(err)
