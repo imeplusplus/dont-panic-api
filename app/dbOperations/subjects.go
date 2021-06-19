@@ -18,7 +18,7 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 	res, err := cosmos.ExecuteQuery(query)
 
 	if err != nil {
-		fmt.Println("Failed to execute a gremling command")
+		fmt.Println("Failed to execute a gremlin command " + query.String())
 		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremling command")
+		fmt.Println("Failed to execute a gremlin command " + query.String())
 		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
 		return subject, err
 	}
@@ -49,11 +49,11 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 	return getSubjectFromResponse(res)
 }
 
-func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
+func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
 	_, err := GetSubjectByName(cosmos, subject.Name)
 
 	if err == nil {
-		return model.Subject{}, errors.New("There is already a subject with this name")
+		return model.Subject{}, errors.New("There is already a subject with name " + subject.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -63,8 +63,8 @@ func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremling command")
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		fmt.Println("Failed to execute a gremlin command " + query.String())
+		// logger.Error().Err(err).Msg("Failed to execute gremlin command")
 		return subject, err
 	}
 
@@ -74,11 +74,8 @@ func InsertSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (model.Subject, error) {
 	oldSubject, err := GetSubjectByName(cosmos, name)
 
-	fmt.Print("Old subject: ", oldSubject, "\n\n")
-	fmt.Print("Subject: ", subject, "\n\n\n")
-
 	if err != nil {
-		return model.Subject{}, errors.New("There is no subject with this name")
+		return model.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -86,7 +83,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (m
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremling command")
+		fmt.Println("Failed to execute a gremlin command " + query.String())
 		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
 		return subject, err
 	}
@@ -109,10 +106,10 @@ func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interf
 		Property("difficulty", subject.Difficulty).
 		Property("category", subject.Category)
 
-	for i, r := range subject.References {
-		if i == 0 {
-			vertex = vertex.Property("references", r)
-		} else {
+	if len(subject.References) >= 0 {
+		vertex = vertex.Property("references", subject.References[0])
+
+		for _, r := range subject.References[1:] {
 			vertex = vertex.PropertyList("references", r)
 		}
 	}
@@ -124,8 +121,9 @@ func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
 	var subject model.Subject
 	response := api.ResponseArray(res)
 	vertices, err := response.ToVertices()
+
 	if len(vertices) == 0 {
-		return subject, errors.New("Vertex is not a subject")
+		return subject, errors.New("There is no vertex in the response")
 	}
 
 	subject, err = vertexToSubject(vertices[0])
@@ -151,10 +149,6 @@ func verticesToSubjects(vertices []api.Vertex) []model.Subject {
 
 func vertexToSubject(vertex api.Vertex) (model.Subject, error) {
 	var subject model.Subject
-
-	if vertex.Label != "subject" {
-		return subject, errors.New("Vertex is not a subject")
-	}
 
 	subject.Id = vertex.ID
 
