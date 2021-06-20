@@ -12,7 +12,7 @@ import (
 	"github.com/imeplusplus/dont-panic-api/app/model"
 )
 
-func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
+func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) {
 	subjects, err := dbOperations.GetSubjects(cosmos)
 
 	if err != nil {
@@ -22,7 +22,9 @@ func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(subjects); err != nil {
+	err = json.NewEncoder(w).Encode(subjects)
+
+	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -40,7 +42,9 @@ func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(subject); err != nil {
+	err = json.NewEncoder(w).Encode(subject)
+
+	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -50,8 +54,9 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 
 	subject := model.Subject{}
-	var err error
-	if err = json.NewDecoder(r.Body).Decode(&subject); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&subject)
+
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -66,7 +71,9 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	if err := json.NewEncoder(w).Encode(subject); err != nil {
+	err = json.NewEncoder(w).Encode(subject)
+
+	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -105,7 +112,9 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(subject); err != nil {
+	err = json.NewEncoder(w).Encode(subject)
+
+	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
