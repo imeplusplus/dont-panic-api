@@ -50,11 +50,11 @@ func (app *App) Initialize() {
 
 func (app *App) setRouters() {
 	// Routing for subjects
-	app.Get("/api/subject", app.handleRequest(handler.GetAllSubjects))
-	app.Post("/api/subject", app.handleRequest(handler.CreateSubject))
-	app.Get("/api/subject/{name}", app.handleRequest(handler.GetSubjectByName))
-	app.Put("/papi/subject{name}", app.handleRequest(handler.UpdateSubject))
-	app.Delete("/papi/subject{name}", app.handleRequest(handler.DeleteSubject))
+	app.Get("/api/subjects", app.handleRequest(handler.GetSubjects))
+	app.Post("/api/subjects", app.handleRequest(handler.CreateSubject))
+	app.Get("/api/subjects/{name}", app.handleRequest(handler.GetSubject))
+	app.Put("/api/subjects/{name}", app.handleRequest(handler.UpdateSubject))
+	app.Delete("/api/subjects/{name}", app.handleRequest(handler.DeleteSubject))
 }
 
 // Get wraps the router for GET method
