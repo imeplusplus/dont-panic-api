@@ -55,6 +55,8 @@ func (app *App) setRouters() {
 	app.Get("/api/subjects/{name}", app.handleRequest(handler.GetSubject))
 	app.Put("/api/subjects/{name}", app.handleRequest(handler.UpdateSubject))
 	app.Delete("/api/subjects/{name}", app.handleRequest(handler.DeleteSubject))
+	// Routing for problems
+	app.Post("/api/problems", app.handleRequest(handler.CreateProblem))
 }
 
 // Get wraps the router for GET method
