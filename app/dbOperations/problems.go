@@ -31,7 +31,7 @@ func CreateProblem(cosmos gremcos.Cosmos, problem model.Problem) (model.Problem,
 
 	problems, err := getProblemsFromResponse(res)
 	if len(problems) == 0 {
-		return problem, err
+		return model.Problem{}, err
 	}
 
 	return problems[0], err
@@ -63,7 +63,30 @@ func GetProblemByName(cosmos gremcos.Cosmos, name string) (model.Problem, error)
 
 	problems, err := getProblemsFromResponse(res)
 	if len(problems) == 0 {
+		return model.Problem{}, err
+	}
+
+	return problems[0], err
+}
+
+func UpdateProblem(cosmos gremcos.Cosmos, problem model.Problem, name string) (model.Problem, error) {
+	oldProblem, err := GetProblemByName(cosmos, name)
+	if err != nil {
+		return oldProblem, fmt.Errorf("there is no problem with name '%v' to update in the database", name)
+	}
+
+	g := api.NewGraph("g")
+	query := addProblemVertexProperties(g.VByStr(oldProblem.Id), problem)
+
+	res, err := cosmos.ExecuteQuery(query)
+	if err != nil {
+		fmt.Println("Failed to execute a gremlin command", query.String())
 		return problem, err
+	}
+
+	problems, err := getProblemsFromResponse(res)
+	if len(problems) == 0 {
+		return model.Problem{}, err
 	}
 
 	return problems[0], err

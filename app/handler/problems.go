@@ -58,8 +58,33 @@ func GetProblems(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) 
 
 func GetProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-
 	problem, err := dbOperations.GetProblemByName(cosmos, vars["name"])
+
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(problem)
+
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func UpdateProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	problem := model.Problem{}
+	if err := json.NewDecoder(r.Body).Decode(&problem); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	problem, err := dbOperations.UpdateProblem(cosmos, problem, vars["name"])
 
 	if err != nil {
 		fmt.Println(err)

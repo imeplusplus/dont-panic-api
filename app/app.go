@@ -59,6 +59,7 @@ func (app *App) setRouters() {
 	app.Get("/api/problems", app.handleRequest(handler.GetProblems))
 	app.Get("/api/problems/{name}", app.handleRequest(handler.GetProblem))
 	app.Post("/api/problems", app.handleRequest(handler.CreateProblem))
+	app.Put("/api/problems/{name}", app.handleRequest(handler.UpdateProblem))
 }
 
 // Get wraps the router for GET method
