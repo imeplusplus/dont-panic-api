@@ -70,6 +70,9 @@ func GetProblemByName(cosmos gremcos.Cosmos, name string) (modelStorage.Problem,
 }
 
 func UpdateProblem(cosmos gremcos.Cosmos, problem modelStorage.Problem, name string) (modelStorage.Problem, error) {
+	if problem.Name != name {
+		return modelStorage.Problem{}, fmt.Errorf("can't change the property 'name' of the Problem")
+	}
 	oldProblem, err := GetProblemByName(cosmos, name)
 	if err != nil {
 		return oldProblem, fmt.Errorf("there is no problem with name '%v' to update in the database", name)
