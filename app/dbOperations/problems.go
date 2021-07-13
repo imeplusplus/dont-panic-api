@@ -92,6 +92,21 @@ func UpdateProblem(cosmos gremcos.Cosmos, problem model.Problem, name string) (m
 	return problems[0], err
 }
 
+func DeleteProblem(cosmos gremcos.Cosmos, name string) error {
+	_, err := GetProblemByName(cosmos, name)
+
+	if err != nil {
+		return fmt.Errorf("there is no problem with name '%v' to delete in the database", name)
+	}
+
+	g := api.NewGraph("g")
+	query := g.V().HasLabel("problem").Has("name", name).Drop()
+
+	_, err = cosmos.ExecuteQuery(query)
+
+	return err
+}
+
 func addProblemVertexProperties(vertex interfaces.Vertex, problem model.Problem) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", problem.Name).

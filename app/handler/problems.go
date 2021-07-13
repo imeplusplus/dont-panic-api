@@ -100,3 +100,18 @@ func UpdateProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
+
+func DeleteProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	err := dbOperations.DeleteProblem(cosmos, vars["name"])
+
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+}
