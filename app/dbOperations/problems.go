@@ -15,7 +15,7 @@ func CreateProblem(cosmos gremcos.Cosmos, problem model.Problem) (model.Problem,
 	_, err := GetProblemByName(cosmos, problem.Name)
 
 	if err == nil {
-		return model.Problem{}, errors.New("There is already a problem with name " + problem.Name)
+		return model.Problem{}, fmt.Errorf("there is already a problem with name %v", problem.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -91,7 +91,7 @@ func getProblemsFromResponse(res []interfaces.Response) ([]model.Problem, error)
 	vertices, _ := response.ToVertices()
 
 	if len(vertices) == 0 {
-		return problems, errors.New("there is no vertex in the response")
+		return problems, errors.New("there is no data with type 'api.vertex' in the response. the graph query didn't return any vertex")
 	}
 
 	for _, v := range vertices {

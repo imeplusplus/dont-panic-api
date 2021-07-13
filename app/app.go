@@ -57,6 +57,7 @@ func (app *App) setRouters() {
 	app.Delete("/api/subjects/{name}", app.handleRequest(handler.DeleteSubject))
 	// Routing for problems
 	app.Get("/api/problems", app.handleRequest(handler.GetProblems))
+	app.Get("/api/problems/{name}", app.handleRequest(handler.GetProblem))
 	app.Post("/api/problems", app.handleRequest(handler.CreateProblem))
 }
 
