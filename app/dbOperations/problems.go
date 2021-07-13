@@ -8,14 +8,14 @@ import (
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
-	"github.com/imeplusplus/dont-panic-api/app/model"
+	modelStorage "github.com/imeplusplus/dont-panic-api/app/modelStorage"
 )
 
-func CreateProblem(cosmos gremcos.Cosmos, problem model.Problem) (model.Problem, error) {
+func CreateProblem(cosmos gremcos.Cosmos, problem modelStorage.Problem) (modelStorage.Problem, error) {
 	_, err := GetProblemByName(cosmos, problem.Name)
 
 	if err == nil {
-		return model.Problem{}, fmt.Errorf("there is already a problem with name %v", problem.Name)
+		return modelStorage.Problem{}, fmt.Errorf("there is already a problem with name %v", problem.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -31,13 +31,13 @@ func CreateProblem(cosmos gremcos.Cosmos, problem model.Problem) (model.Problem,
 
 	problems, err := getProblemsFromResponse(res)
 	if len(problems) == 0 {
-		return model.Problem{}, err
+		return modelStorage.Problem{}, err
 	}
 
 	return problems[0], err
 }
 
-func GetProblems(cosmos gremcos.Cosmos) ([]model.Problem, error) {
+func GetProblems(cosmos gremcos.Cosmos) ([]modelStorage.Problem, error) {
 	g := api.NewGraph("g")
 
 	query := g.V().HasLabel("problem")
@@ -50,8 +50,8 @@ func GetProblems(cosmos gremcos.Cosmos) ([]model.Problem, error) {
 	return getProblemsFromResponse(res)
 }
 
-func GetProblemByName(cosmos gremcos.Cosmos, name string) (model.Problem, error) {
-	var problem model.Problem
+func GetProblemByName(cosmos gremcos.Cosmos, name string) (modelStorage.Problem, error) {
+	var problem modelStorage.Problem
 	g := api.NewGraph("g")
 	query := g.V().HasLabel("problem").Has("name", name)
 
@@ -63,13 +63,13 @@ func GetProblemByName(cosmos gremcos.Cosmos, name string) (model.Problem, error)
 
 	problems, err := getProblemsFromResponse(res)
 	if len(problems) == 0 {
-		return model.Problem{}, err
+		return modelStorage.Problem{}, err
 	}
 
 	return problems[0], err
 }
 
-func UpdateProblem(cosmos gremcos.Cosmos, problem model.Problem, name string) (model.Problem, error) {
+func UpdateProblem(cosmos gremcos.Cosmos, problem modelStorage.Problem, name string) (modelStorage.Problem, error) {
 	oldProblem, err := GetProblemByName(cosmos, name)
 	if err != nil {
 		return oldProblem, fmt.Errorf("there is no problem with name '%v' to update in the database", name)
@@ -86,7 +86,7 @@ func UpdateProblem(cosmos gremcos.Cosmos, problem model.Problem, name string) (m
 
 	problems, err := getProblemsFromResponse(res)
 	if len(problems) == 0 {
-		return model.Problem{}, err
+		return modelStorage.Problem{}, err
 	}
 
 	return problems[0], err
@@ -107,24 +107,17 @@ func DeleteProblem(cosmos gremcos.Cosmos, name string) error {
 	return err
 }
 
-func addProblemVertexProperties(vertex interfaces.Vertex, problem model.Problem) interfaces.Vertex {
+func addProblemVertexProperties(vertex interfaces.Vertex, problem modelStorage.Problem) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", problem.Name).
-		Property("difficulty", problem.Difficulty)
-
-	if len(problem.Subjects) > 0 {
-		vertex = vertex.Property("subjects", problem.Subjects[0])
-
-		for _, s := range problem.Subjects[1:] {
-			vertex = vertex.PropertyList("subjects", s)
-		}
-	}
+		Property("difficulty", problem.Difficulty).
+		Property("link", problem.Link)
 
 	return vertex
 }
 
-func getProblemsFromResponse(res []interfaces.Response) ([]model.Problem, error) {
-	var problems []model.Problem
+func getProblemsFromResponse(res []interfaces.Response) ([]modelStorage.Problem, error) {
+	var problems []modelStorage.Problem
 	response := api.ResponseArray(res)
 	vertices, _ := response.ToVertices()
 
@@ -139,18 +132,16 @@ func getProblemsFromResponse(res []interfaces.Response) ([]model.Problem, error)
 	return problems, nil
 }
 
-func vertexToProblem(vertex api.Vertex) model.Problem {
-	var problem model.Problem
+func vertexToProblem(vertex api.Vertex) modelStorage.Problem {
+	var problem modelStorage.Problem
 
 	problem.Id = vertex.ID
 
 	properties := vertex.Properties
 	problem.Name = properties["name"][0].Value.AsString()
 	problem.Difficulty = int(properties["difficulty"][0].Value.AsInt32())
+	problem.Link = properties["link"][0].Value.AsString()
 	problem.PartitionKey = properties["partitionKey"][0].Value.AsString()
-	for _, p := range properties["subjects"] {
-		problem.Subjects = append(problem.Subjects, p.Value.AsString())
-	}
 
 	return problem
 }

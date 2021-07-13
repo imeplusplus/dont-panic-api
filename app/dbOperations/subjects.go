@@ -8,7 +8,7 @@ import (
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
-	"github.com/imeplusplus/dont-panic-api/app/model"
+	model "github.com/imeplusplus/dont-panic-api/app/modelStorage"
 )
 
 func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
@@ -42,7 +42,7 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
 		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		// logger.Error().Err(err).Msg("Failed to execute a gremlin command")
 		return subject, err
 	}
 
@@ -59,7 +59,7 @@ func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 	g := api.NewGraph("g")
 
 	query := g.AddV("subject").Property("partitionKey", "subject")
-	query = addVertexProperties(query, subject)
+	query = addSubjectVertexProperties(query, subject)
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
@@ -79,7 +79,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (m
 	}
 
 	g := api.NewGraph("g")
-	query := addVertexProperties(g.VByStr(oldSubject.Id), subject)
+	query := addSubjectVertexProperties(g.VByStr(oldSubject.Id), subject)
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
@@ -100,7 +100,7 @@ func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
 	return err
 }
 
-func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interfaces.Vertex {
+func addSubjectVertexProperties(vertex interfaces.Vertex, subject model.Subject) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", subject.Name).
 		Property("difficulty", subject.Difficulty).
@@ -120,13 +120,13 @@ func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interf
 func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
 	var subject model.Subject
 	response := api.ResponseArray(res)
-	vertices, err := response.ToVertices()
+	vertices, _ := response.ToVertices()
 
 	if len(vertices) == 0 {
-		return subject, errors.New("There is no vertex in the response")
+		return subject, errors.New("there is no vertex in the response")
 	}
 
-	subject, err = vertexToSubject(vertices[0])
+	subject, err := vertexToSubject(vertices[0])
 	if err != nil {
 		return subject, err
 	}

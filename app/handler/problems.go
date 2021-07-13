@@ -9,11 +9,11 @@ import (
 	gremcos "github.com/supplyon/gremcos"
 
 	"github.com/imeplusplus/dont-panic-api/app/dbOperations"
-	"github.com/imeplusplus/dont-panic-api/app/model"
+	modelStorage "github.com/imeplusplus/dont-panic-api/app/modelStorage"
 )
 
 func CreateProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-	problem := model.Problem{}
+	problem := modelStorage.Problem{}
 	if err := json.NewDecoder(r.Body).Decode(&problem); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -78,7 +78,7 @@ func GetProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 func UpdateProblem(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	problem := model.Problem{}
+	problem := modelStorage.Problem{}
 	if err := json.NewDecoder(r.Body).Decode(&problem); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

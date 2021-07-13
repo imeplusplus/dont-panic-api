@@ -9,7 +9,7 @@ import (
 	gremcos "github.com/supplyon/gremcos"
 
 	"github.com/imeplusplus/dont-panic-api/app/dbOperations"
-	"github.com/imeplusplus/dont-panic-api/app/model"
+	modelStorage "github.com/imeplusplus/dont-panic-api/app/modelStorage"
 )
 
 func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) {
@@ -53,7 +53,7 @@ func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	subject := model.Subject{}
+	subject := modelStorage.Subject{}
 	err := json.NewDecoder(r.Body).Decode(&subject)
 
 	if err != nil {
@@ -95,7 +95,7 @@ func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 }
 
 func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
-	subject := model.Subject{}
+	subject := modelStorage.Subject{}
 	var err error
 	if err = json.NewDecoder(r.Body).Decode(&subject); err != nil {
 		w.WriteHeader(http.StatusBadRequest)

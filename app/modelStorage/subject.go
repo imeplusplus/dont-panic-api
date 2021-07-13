@@ -1,9 +1,10 @@
-package model
+package modelStorage
 
-type Problem struct {
+type Subject struct {
 	Id           string   `json:"id"`
 	Name         string   `json:"name"`
-	Subjects     []string `json:"subjects"`
+	References   []string `json:"references"`
 	Difficulty   int      `json:"difficulty"`
+	Category     string   `json:"category"`
 	PartitionKey string   `json:"partitionKey"`
 }
