@@ -8,10 +8,10 @@ import (
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
-	model "github.com/imeplusplus/dont-panic-api/app/modelStorage"
+	modelStorage "github.com/imeplusplus/dont-panic-api/app/modelStorage"
 )
 
-func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
+func GetSubjects(cosmos gremcos.Cosmos) ([]modelStorage.Subject, error) {
 	g := api.NewGraph("g")
 	query := g.V().HasLabel("subject")
 
@@ -34,8 +34,8 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 	return subjects, nil
 }
 
-func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error) {
-	var subject model.Subject
+func GetSubjectByName(cosmos gremcos.Cosmos, name string) (modelStorage.Subject, error) {
+	var subject modelStorage.Subject
 	g := api.NewGraph("g")
 	query := g.V().HasLabel("subject").Has("name", name)
 
@@ -49,11 +49,11 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 	return getSubjectFromResponse(res)
 }
 
-func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
+func CreateSubject(cosmos gremcos.Cosmos, subject modelStorage.Subject) (modelStorage.Subject, error) {
 	_, err := GetSubjectByName(cosmos, subject.Name)
 
 	if err == nil {
-		return model.Subject{}, errors.New("There is already a subject with name " + subject.Name)
+		return modelStorage.Subject{}, errors.New("There is already a subject with name " + subject.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -71,11 +71,11 @@ func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 	return getSubjectFromResponse(res)
 }
 
-func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (model.Subject, error) {
+func UpdateSubject(cosmos gremcos.Cosmos, subject modelStorage.Subject, name string) (modelStorage.Subject, error) {
 	oldSubject, err := GetSubjectByName(cosmos, name)
 
 	if err != nil {
-		return model.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
+		return modelStorage.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -100,7 +100,7 @@ func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
 	return err
 }
 
-func addSubjectVertexProperties(vertex interfaces.Vertex, subject model.Subject) interfaces.Vertex {
+func addSubjectVertexProperties(vertex interfaces.Vertex, subject modelStorage.Subject) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", subject.Name).
 		Property("difficulty", subject.Difficulty).
@@ -117,8 +117,8 @@ func addSubjectVertexProperties(vertex interfaces.Vertex, subject model.Subject)
 	return vertex
 }
 
-func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
-	var subject model.Subject
+func getSubjectFromResponse(res []interfaces.Response) (modelStorage.Subject, error) {
+	var subject modelStorage.Subject
 	response := api.ResponseArray(res)
 	vertices, _ := response.ToVertices()
 
@@ -134,8 +134,8 @@ func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
 	return subject, nil
 }
 
-func verticesToSubjects(vertices []api.Vertex) []model.Subject {
-	subjects := []model.Subject{}
+func verticesToSubjects(vertices []api.Vertex) []modelStorage.Subject {
+	subjects := []modelStorage.Subject{}
 
 	for _, v := range vertices {
 		subject, err := vertexToSubject(v)
@@ -147,8 +147,8 @@ func verticesToSubjects(vertices []api.Vertex) []model.Subject {
 	return subjects
 }
 
-func vertexToSubject(vertex api.Vertex) (model.Subject, error) {
-	var subject model.Subject
+func vertexToSubject(vertex api.Vertex) (modelStorage.Subject, error) {
+	var subject modelStorage.Subject
 
 	subject.Id = vertex.ID
 
