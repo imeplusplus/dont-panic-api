@@ -3,14 +3,14 @@ Work in progress - the current version doesn't have the basic features yet and s
 
 This is an API written to support your studies in Competitive Programming.
 Its goal is to be tool to:
-	- List subjects with difficulty and dependencies
-	- List problems for each subject so you can practice
-	- Suggest new subjects to learn
-	- Suggest new problems to solve
-	- Track subjects you've learned
-	- Track problems you've solved
-	- Suggest when its time to review some subject by recommending problems of that subject (based on spaced repetition method)
-	- Give permissions for coaches and teammates to your progress
+- List subjects with difficulty and dependencies
+- List problems for each subject so you can practice
+- Suggest new subjects to learn
+- Suggest new problems to solve
+- Track subjects you've learned
+- Track problems you've solved
+- Suggest when its time to review some subject by recommending problems of that subject (based on spaced repetition method)
+- Give permissions for coaches and teammates to your progress
 
 ## Pre-requisites
 This API uses Azure CosmosDB graph database. To use it you will need to configure these environment variables for accessing your db:
