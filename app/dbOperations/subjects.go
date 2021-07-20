@@ -8,8 +8,8 @@ import (
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
-	apiModel "github.com/imeplusplus/dont-panic-api/app/models/api"
-	storageModel "github.com/imeplusplus/dont-panic-api/app/models/storage"
+	apiModel "github.com/imeplusplus/dont-panic-api/app/model/api"
+	storageModel "github.com/imeplusplus/dont-panic-api/app/model/storage"
 )
 
 func GetSubjects(cosmos gremcos.Cosmos) ([]storageModel.Subject, error) {

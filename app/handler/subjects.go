@@ -9,7 +9,7 @@ import (
 	gremcos "github.com/supplyon/gremcos"
 
 	"github.com/imeplusplus/dont-panic-api/app/dbOperations"
-	apiModel "github.com/imeplusplus/dont-panic-api/app/models/api"
+	apiModel "github.com/imeplusplus/dont-panic-api/app/model/api"
 )
 
 func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) {
