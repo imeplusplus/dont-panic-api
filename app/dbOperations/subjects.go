@@ -8,11 +8,11 @@ import (
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
-	modelAPI "github.com/imeplusplus/dont-panic-api/app/modelAPI"
-	modelStorage "github.com/imeplusplus/dont-panic-api/app/modelStorage"
+	apiModel "github.com/imeplusplus/dont-panic-api/app/models/api"
+	storageModel "github.com/imeplusplus/dont-panic-api/app/models/storage"
 )
 
-func GetSubjects(cosmos gremcos.Cosmos) ([]modelStorage.Subject, error) {
+func GetSubjects(cosmos gremcos.Cosmos) ([]storageModel.Subject, error) {
 	g := api.NewGraph("g")
 	query := g.V().HasLabel("subject")
 
@@ -35,8 +35,8 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]modelStorage.Subject, error) {
 	return subjects, nil
 }
 
-func GetSubjectByName(cosmos gremcos.Cosmos, name string) (modelStorage.Subject, error) {
-	var subject modelStorage.Subject
+func GetSubjectByName(cosmos gremcos.Cosmos, name string) (storageModel.Subject, error) {
+	var subject storageModel.Subject
 	g := api.NewGraph("g")
 	query := g.V().HasLabel("subject").Has("name", name)
 
@@ -50,11 +50,11 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (modelStorage.Subject,
 	return getSubjectFromResponse(res)
 }
 
-func CreateSubject(cosmos gremcos.Cosmos, subject modelAPI.Subject) (modelStorage.Subject, error) {
+func CreateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject) (storageModel.Subject, error) {
 	_, err := GetSubjectByName(cosmos, subject.Name)
 
 	if err == nil {
-		return modelStorage.Subject{}, errors.New("There is already a subject with name " + subject.Name)
+		return storageModel.Subject{}, errors.New("There is already a subject with name " + subject.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -66,17 +66,17 @@ func CreateSubject(cosmos gremcos.Cosmos, subject modelAPI.Subject) (modelStorag
 	if err != nil {
 		fmt.Println("Failed to execute a gremlin command " + query.String())
 		// logger.Error().Err(err).Msg("Failed to execute gremlin command")
-		return modelStorage.Subject{}, err
+		return storageModel.Subject{}, err
 	}
 
 	return getSubjectFromResponse(res)
 }
 
-func UpdateSubject(cosmos gremcos.Cosmos, subject modelAPI.Subject, name string) (modelStorage.Subject, error) {
+func UpdateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject, name string) (storageModel.Subject, error) {
 	oldSubject, err := GetSubjectByName(cosmos, name)
 
 	if err != nil {
-		return modelStorage.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
+		return storageModel.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
 	}
 
 	g := api.NewGraph("g")
@@ -86,7 +86,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject modelAPI.Subject, name string)
 	if err != nil {
 		fmt.Println("Failed to execute a gremlin command " + query.String())
 		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
-		return modelStorage.Subject{}, err
+		return storageModel.Subject{}, err
 	}
 
 	return getSubjectFromResponse(res)
@@ -101,7 +101,7 @@ func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
 	return err
 }
 
-func addVertexProperties(vertex interfaces.Vertex, subject modelAPI.Subject) interfaces.Vertex {
+func addVertexProperties(vertex interfaces.Vertex, subject apiModel.Subject) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", subject.Name).
 		Property("difficulty", subject.Difficulty).
@@ -118,8 +118,8 @@ func addVertexProperties(vertex interfaces.Vertex, subject modelAPI.Subject) int
 	return vertex
 }
 
-func getSubjectFromResponse(res []interfaces.Response) (modelStorage.Subject, error) {
-	var subject modelStorage.Subject
+func getSubjectFromResponse(res []interfaces.Response) (storageModel.Subject, error) {
+	var subject storageModel.Subject
 	response := api.ResponseArray(res)
 	vertices, _ := response.ToVertices()
 
@@ -132,8 +132,8 @@ func getSubjectFromResponse(res []interfaces.Response) (modelStorage.Subject, er
 	return subject, nil
 }
 
-func verticesToSubjects(vertices []api.Vertex) []modelStorage.Subject {
-	subjects := []modelStorage.Subject{}
+func verticesToSubjects(vertices []api.Vertex) []storageModel.Subject {
+	subjects := []storageModel.Subject{}
 
 	for _, v := range vertices {
 		subject := vertexToSubject(v)
@@ -143,8 +143,8 @@ func verticesToSubjects(vertices []api.Vertex) []modelStorage.Subject {
 	return subjects
 }
 
-func vertexToSubject(vertex api.Vertex) modelStorage.Subject {
-	var subject modelStorage.Subject
+func vertexToSubject(vertex api.Vertex) storageModel.Subject {
+	var subject storageModel.Subject
 
 	subject.Id = vertex.ID
 

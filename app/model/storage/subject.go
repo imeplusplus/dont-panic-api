@@ -1,4 +1,4 @@
-package modelAPI
+package model
 
 type Subject struct {
 	Id           string   `json:"id"`
