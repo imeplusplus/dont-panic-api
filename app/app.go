@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	gremcos "github.com/supplyon/gremcos"
 
 	"github.com/imeplusplus/dont-panic-api/app/handler"
@@ -31,7 +32,7 @@ func (app *App) Initialize() {
 	fmt.Println(username)
 	fmt.Println(password)
 
-	app.Logger = zerolog.New(os.Stdout).Output(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: zerolog.TimeFieldFormat}).With().Timestamp().Logger()
+	app.Logger = log.Logger
 	app.Cosmos, err = gremcos.New(host,
 		gremcos.WithAuth(username, password),
 		gremcos.WithLogger(app.Logger),
@@ -41,7 +42,7 @@ func (app *App) Initialize() {
 	)
 
 	if err != nil {
-		fmt.Println("Could not connect database")
+		log.Error().Err(err).Msg("Could not connect to server")
 	}
 
 	app.Router = mux.NewRouter()
@@ -87,5 +88,5 @@ func (app *App) handleRequest(handler RequestHandlerFunction) http.HandlerFunc {
 
 // Run the app on it's router
 func (app *App) Run(host string) {
-	fmt.Println(http.ListenAndServe(host, app.Router))
+	log.Info().Msg(http.ListenAndServe(host, app.Router).Error())
 }
