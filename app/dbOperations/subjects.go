@@ -1,13 +1,14 @@
 package dbOperations
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	gremcos "github.com/supplyon/gremcos"
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
+	"github.com/imeplusplus/dont-panic-api/app/logger"
 	apiModel "github.com/imeplusplus/dont-panic-api/app/model/api"
 	storageModel "github.com/imeplusplus/dont-panic-api/app/model/storage"
 )
@@ -19,8 +20,7 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]storageModel.Subject, error) {
 	res, err := cosmos.ExecuteQuery(query)
 
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return nil, err
 	}
 
@@ -42,8 +42,7 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (storageModel.Subject,
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return subject, err
 	}
 
@@ -54,7 +53,9 @@ func CreateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject) (storageMode
 	_, err := GetSubjectByName(cosmos, subject.Name)
 
 	if err == nil {
-		return storageModel.Subject{}, errors.New("There is already a subject with name " + subject.Name)
+		err := logger.ErrorResourceAlreadyExists{ResourceName: subject.Name}.Error()
+		log.Error().Err(err).Msg(fmt.Sprintf("There is already a subject with name %s in the database", subject.Name))
+		return storageModel.Subject{}, err
 	}
 
 	g := api.NewGraph("g")
@@ -64,8 +65,7 @@ func CreateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject) (storageMode
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		// logger.Error().Err(err).Msg("Failed to execute gremlin command")
+		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return storageModel.Subject{}, err
 	}
 
@@ -76,7 +76,9 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject, name string)
 	oldSubject, err := GetSubjectByName(cosmos, name)
 
 	if err != nil {
-		return storageModel.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
+		err := logger.ErrorResourceNotFound{ResourceName: name}.Error()
+		log.Error().Err(err).Msg(fmt.Sprintf("Couldn't find subject with name %s in the database", name))
+		return storageModel.Subject{}, err
 	}
 
 	g := api.NewGraph("g")
@@ -84,8 +86,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject, name string)
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return storageModel.Subject{}, err
 	}
 
@@ -124,7 +125,9 @@ func getSubjectFromResponse(res []interfaces.Response) (storageModel.Subject, er
 	vertices, _ := response.ToVertices()
 
 	if len(vertices) == 0 {
-		return subject, errors.New("there is no vertex in the response")
+		err := logger.ErrorResourceNotFound{ResourceName: "response"}.Error()
+		log.Error().Err(err).Msg("")
+		return subject, err
 	}
 
 	subject = vertexToSubject(vertices[0])
