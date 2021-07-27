@@ -10,6 +10,7 @@ import (
 
 	"github.com/imeplusplus/dont-panic-api/app/dbOperations"
 	apiModel "github.com/imeplusplus/dont-panic-api/app/model/api"
+	storageModel "github.com/imeplusplus/dont-panic-api/app/model/storage"
 )
 
 func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) {
@@ -61,7 +62,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := dbOperations.UpdateSubject(cosmos, subject, vars["name"])
+	res, err := dbOperations.UpdateSubject(cosmos, storageModel.Subject(subject), vars["name"])
 
 	if err != nil {
 		fmt.Println(err)
@@ -102,7 +103,7 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, err := dbOperations.CreateSubject(cosmos, subject)
+	res, err := dbOperations.CreateSubject(cosmos, storageModel.Subject(subject))
 
 	if err != nil {
 		fmt.Println(err)

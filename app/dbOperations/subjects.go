@@ -8,7 +8,6 @@ import (
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
 
-	apiModel "github.com/imeplusplus/dont-panic-api/app/model/api"
 	storageModel "github.com/imeplusplus/dont-panic-api/app/model/storage"
 )
 
@@ -50,7 +49,7 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (storageModel.Subject,
 	return getSubjectFromResponse(res)
 }
 
-func CreateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject) (storageModel.Subject, error) {
+func CreateSubject(cosmos gremcos.Cosmos, subject storageModel.Subject) (storageModel.Subject, error) {
 	_, err := GetSubjectByName(cosmos, subject.Name)
 
 	if err == nil {
@@ -60,6 +59,7 @@ func CreateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject) (storageMode
 	g := api.NewGraph("g")
 
 	query := g.AddV("subject").Property("partitionKey", "subject")
+
 	query = addVertexProperties(query, subject)
 
 	res, err := cosmos.ExecuteQuery(query)
@@ -72,7 +72,7 @@ func CreateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject) (storageMode
 	return getSubjectFromResponse(res)
 }
 
-func UpdateSubject(cosmos gremcos.Cosmos, subject apiModel.Subject, name string) (storageModel.Subject, error) {
+func UpdateSubject(cosmos gremcos.Cosmos, subject storageModel.Subject, name string) (storageModel.Subject, error) {
 	oldSubject, err := GetSubjectByName(cosmos, name)
 
 	if err != nil {
@@ -101,7 +101,7 @@ func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
 	return err
 }
 
-func addVertexProperties(vertex interfaces.Vertex, subject apiModel.Subject) interfaces.Vertex {
+func addVertexProperties(vertex interfaces.Vertex, subject storageModel.Subject) interfaces.Vertex {
 	vertex = vertex.
 		Property("name", subject.Name).
 		Property("difficulty", subject.Difficulty).
