@@ -14,7 +14,7 @@ import (
 )
 
 func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) {
-	res, err := dbOperations.GetSubjects(cosmos)
+	storageSubjects, err := dbOperations.GetSubjects(cosmos)
 
 	if err != nil {
 		fmt.Println(err)
@@ -23,7 +23,7 @@ func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) 
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(storageSubjects)
 
 	if err != nil {
 		fmt.Println(err)
@@ -34,7 +34,7 @@ func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) 
 func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	res, err := dbOperations.GetSubjectByName(cosmos, vars["name"])
+	storageSubject, err := dbOperations.GetSubjectByName(cosmos, vars["name"])
 
 	if err != nil {
 		fmt.Println(err)
@@ -43,7 +43,7 @@ func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(storageSubject)
 
 	if err != nil {
 		fmt.Println(err)
