@@ -5,23 +5,23 @@ import (
 )
 
 var (
-	errorResourceAlreadyExistsMessage = LogEvent{1, "Resource %s already exists"}
-	errorResourceNotFoundMessage      = LogEvent{2, "Resource %s not found"}
-	errorNoVertexInResourceMessage    = LogEvent{3, "There is no vertex in resource %s"}
+	errorResourceAlreadyExistsMessage = LogEvent{1, "resource %s already exists"}
+	errorResourceNotFoundMessage      = LogEvent{2, "resource %s not found"}
+	errorNoVerticesInQueryMessage     = LogEvent{3, "the Gremlin Query did not return any vertices"}
 )
 
 type ErrorResourceAlreadyExists struct{ ResourceName string }
 type ErrorResourceNotFound struct{ ResourceName string }
-type ErrorNoVertexInResource struct{ ResourceName string }
+type ErrorNoVerticesInQuery struct{}
 
-func (e ErrorResourceAlreadyExists) Error() error {
-	return fmt.Errorf(errorResourceAlreadyExistsMessage.message, e.ResourceName)
+func (e ErrorResourceAlreadyExists) Error() string {
+	return fmt.Sprintf(errorResourceAlreadyExistsMessage.message, e.ResourceName)
 }
 
-func (e ErrorResourceNotFound) Error() error {
-	return fmt.Errorf(errorResourceNotFoundMessage.message, e.ResourceName)
+func (e ErrorResourceNotFound) Error() string {
+	return fmt.Sprintf(errorResourceNotFoundMessage.message, e.ResourceName)
 }
 
-func (e ErrorNoVertexInResource) Error() error {
-	return fmt.Errorf(errorNoVertexInResourceMessage.message, e.ResourceName)
+func (e ErrorNoVerticesInQuery) Error() string {
+	return fmt.Sprintf(errorNoVerticesInQueryMessage.message)
 }

@@ -1,9 +1,6 @@
 package dbOperations
 
 import (
-	"fmt"
-
-	"github.com/rs/zerolog/log"
 	gremcos "github.com/supplyon/gremcos"
 	"github.com/supplyon/gremcos/api"
 	"github.com/supplyon/gremcos/interfaces"
@@ -19,7 +16,6 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]storageModel.Subject, error) {
 	res, err := cosmos.ExecuteQuery(query)
 
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return nil, err
 	}
 
@@ -41,7 +37,6 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (storageModel.Subject,
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return subject, err
 	}
 
@@ -52,20 +47,17 @@ func CreateSubject(cosmos gremcos.Cosmos, subject storageModel.Subject) (storage
 	_, err := GetSubjectByName(cosmos, subject.Name)
 
 	if err == nil {
-		err := logger.ErrorResourceAlreadyExists{ResourceName: subject.Name}.Error()
-		log.Error().Err(err).Msg(fmt.Sprintf("There is already a subject with name %s in the database", subject.Name))
+		err := logger.ErrorResourceAlreadyExists{ResourceName: subject.Name}
 		return storageModel.Subject{}, err
 	}
 
 	g := api.NewGraph("g")
 
 	query := g.AddV("subject").Property("partitionKey", "subject")
-
 	query = addVertexProperties(query, subject)
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return storageModel.Subject{}, err
 	}
 
@@ -74,10 +66,7 @@ func CreateSubject(cosmos gremcos.Cosmos, subject storageModel.Subject) (storage
 
 func UpdateSubject(cosmos gremcos.Cosmos, subject storageModel.Subject, name string) (storageModel.Subject, error) {
 	oldSubject, err := GetSubjectByName(cosmos, name)
-
 	if err != nil {
-		err := logger.ErrorResourceNotFound{ResourceName: name}.Error()
-		log.Error().Err(err).Msg(fmt.Sprintf("Couldn't find subject with name %s in the database", name))
 		return storageModel.Subject{}, err
 	}
 
@@ -86,7 +75,6 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject storageModel.Subject, name str
 
 	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		log.Error().Err(err).Msg(fmt.Sprintf("Failed to execute the gremlin command: %v", query))
 		return storageModel.Subject{}, err
 	}
 
@@ -125,8 +113,7 @@ func getSubjectFromResponse(res []interfaces.Response) (storageModel.Subject, er
 	vertices, _ := response.ToVertices()
 
 	if len(vertices) == 0 {
-		err := logger.ErrorResourceNotFound{ResourceName: "response"}.Error()
-		log.Error().Err(err).Msg("")
+		err := logger.ErrorNoVerticesInQuery{}
 		return subject, err
 	}
 

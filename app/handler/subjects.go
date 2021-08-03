@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,22 +17,26 @@ import (
 
 func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) {
 	storageSubjects, err := dbOperations.GetSubjects(cosmos)
-
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToExecuteGremlinQuery{}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(storageSubjects)
-
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToEncodeJSON{
+			Resource: "storageModel.Subject",
+		}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+
 	msg := logger.ResourceRead{
-		Resource: storageModel.PrettyPrint(res),
+		ResourceName:    "subjects",
+		ResourceContent: storageModel.PrettyPrint(storageSubjects),
 	}
 	log.Info().Msg(msg.Info())
 }
@@ -40,23 +45,26 @@ func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	storageSubject, err := dbOperations.GetSubjectByName(cosmos, vars["name"])
-
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToExecuteGremlinQuery{}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(storageSubject)
-
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToEncodeJSON{
+			Resource: "storageModel.Subject",
+		}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
 	msg := logger.ResourceRead{
-		Resource: storageModel.PrettyPrint(res),
+		ResourceName:    "subjects/" + storageSubject.Name,
+		ResourceContent: storageModel.PrettyPrint(storageSubject),
 	}
 	log.Info().Msg(msg.Info())
 }
@@ -64,19 +72,21 @@ func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	oldSubject, err := dbOperations.GetSubjectByName(cosmos, name)
 
 	apiSubject := apiModel.Subject{}
 	if err := json.NewDecoder(r.Body).Decode(&apiSubject); err != nil {
-		log.Error().Stack().Err(err).Msg("Couldn't parse request body into apiModel.Subject")
+		msg := logger.FailedToDecodeJSON{
+			Resource: "apiModel.Subject",
+		}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	storageSubject, err := dbOperations.UpdateSubject(cosmos, storageModel.Subject(apiSubject), vars["name"])
-
+	storageSubject, err := dbOperations.UpdateSubject(cosmos, storageModel.Subject(apiSubject), name)
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToExecuteGremlinQuery{}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -86,12 +96,16 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 	err = json.NewEncoder(w).Encode(storageSubject)
 
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("Couldn't create response body with created subject")
+		msg := logger.FailedToEncodeJSON{
+			Resource: "apiModel.Subject",
+		}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+
 	msg := logger.ResourceUpdated{
-		PastResource: storageModel.PrettyPrint(oldSubject),
-		NewResource:  storageModel.PrettyPrint(storageSubject),
+		ResourceName:    "subjects/" + storageSubject.Name,
+		ResourceContent: storageModel.PrettyPrint(storageSubject),
 	}
 	log.Info().Msg(msg.Info())
 }
@@ -99,18 +113,11 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	subject, err := dbOperations.GetSubjectByName(cosmos, name)
 
+	err := dbOperations.DeleteSubject(cosmos, name)
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	err = dbOperations.DeleteSubject(cosmos, name)
-
-	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToExecuteGremlinQuery{}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -118,8 +125,8 @@ func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 
-	msg := logger.ResourceCreated{
-		Resource: storageModel.PrettyPrint(subject),
+	msg := logger.ResourceDeleted{
+		ResourceName: "subjects/" + name,
 	}
 	log.Info().Msg(msg.Info())
 }
@@ -127,30 +134,38 @@ func DeleteSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 	apiSubject := apiModel.Subject{}
 	if err := json.NewDecoder(r.Body).Decode(&apiSubject); err != nil {
-		log.Error().Stack().Err(err).Msg("Couldn't parse request body into apiModel.Subject")
+		msg := logger.FailedToDecodeJSON{
+			Resource: "apiModel.Subject",
+		}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	storageSubject, err := dbOperations.CreateSubject(cosmos, storageModel.Subject(apiSubject))
-
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		msg := logger.FailedToExecuteGremlinQuery{}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(storageSubject)
 
+	err = json.NewEncoder(w).Encode(storageSubject)
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("Couldn't create response body with created subject")
+		msg := logger.FailedToEncodeJSON{
+			Resource: "storageModel.Subject",
+		}
+		log.Error().Stack().Err(err).Msg(msg.Info())
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	fmt.Println(storageSubject.Name)
 	msg := logger.ResourceCreated{
-		Resource: storageModel.PrettyPrint(storageSubject),
+		ResourceName:    "subjects/" + storageSubject.Name,
+		ResourceContent: storageModel.PrettyPrint(storageSubject),
 	}
 	log.Info().Msg(msg.Info())
 }
