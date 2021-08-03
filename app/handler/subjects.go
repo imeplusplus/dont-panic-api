@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -162,7 +161,6 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	fmt.Println(storageSubject.Name)
 	msg := logger.ResourceCreated{
 		ResourceName:    "subjects/" + storageSubject.Name,
 		ResourceContent: storageModel.PrettyPrint(storageSubject),
