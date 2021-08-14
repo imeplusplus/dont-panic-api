@@ -22,8 +22,14 @@ func GetSubjects(cosmos gremcos.Cosmos, w http.ResponseWriter, _ *http.Request) 
 		return
 	}
 
+	apiSubjects := []apiModel.Subject{}
+
+	for _, subject := range storageSubjects {
+		apiSubjects = append(apiSubjects, NewApiSubject(subject, nil))
+	}
+
 	w.Header().Add("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(storageSubjects)
+	err = json.NewEncoder(w).Encode(apiSubjects)
 
 	if err != nil {
 		fmt.Println(err)
@@ -42,8 +48,10 @@ func GetSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	apiSubject := NewApiSubject(storageSubject, nil)
+
 	w.Header().Add("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(storageSubject)
+	err = json.NewEncoder(w).Encode(apiSubject)
 
 	if err != nil {
 		fmt.Println(err)
@@ -62,7 +70,8 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	storageSubject, err := dbOperations.UpdateSubject(cosmos, storageModel.Subject(apiSubject), vars["name"])
+	storageSubject, err := dbOperations.UpdateSubject(cosmos, NewStorageSubject(apiSubject), vars["name"])
+	apiSubject = NewApiSubject(storageSubject, nil)
 
 	if err != nil {
 		fmt.Println(err)
@@ -72,7 +81,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
-	err = json.NewEncoder(w).Encode(storageSubject)
+	err = json.NewEncoder(w).Encode(apiSubject)
 
 	if err != nil {
 		fmt.Println(err)
@@ -103,7 +112,8 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	storageSubject, err := dbOperations.CreateSubject(cosmos, storageModel.Subject(apiSubject))
+	storageSubject, err := dbOperations.CreateSubject(cosmos, NewStorageSubject(apiSubject))
+	apiSubject = NewApiSubject(storageSubject, nil)
 
 	if err != nil {
 		fmt.Println(err)
@@ -113,10 +123,33 @@ func CreateSubject(cosmos gremcos.Cosmos, w http.ResponseWriter, r *http.Request
 
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(storageSubject)
+	err = json.NewEncoder(w).Encode(apiSubject)
 
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func NewApiSubject(storageSubject storageModel.Subject, dependencies []string) apiModel.Subject {
+	apiSubject := new(apiModel.Subject)
+
+	apiSubject.Name = storageSubject.Name
+	apiSubject.Category = storageSubject.Category
+	apiSubject.Difficulty = storageSubject.Difficulty
+	apiSubject.References = storageSubject.References
+	apiSubject.Dependencies = dependencies
+
+	return *apiSubject
+}
+
+func NewStorageSubject(apiSubject apiModel.Subject) storageModel.Subject {
+	storageSubject := new(storageModel.Subject)
+
+	storageSubject.Name = apiSubject.Name
+	storageSubject.Category = apiSubject.Category
+	storageSubject.Difficulty = apiSubject.Difficulty
+	storageSubject.References = apiSubject.References
+
+	return *storageSubject
 }
