@@ -1,4 +1,4 @@
-package model
+package modelStorage
 
 type Subject struct {
 	Id           string   `json:"id"`
