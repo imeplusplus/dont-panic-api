@@ -29,15 +29,15 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 }
 
 func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error) {
-	var subject model.Subject
-
 	vertex, err := getVertexByName(cosmos, name)
 
 	if err != nil {
-		return subject, err
+		return model.Subject{}, err
 	}
 
-	return vertexToSubject(vertex)
+	var subject model.Subject
+	subject, err = vertexToSubject(vertex)
+	return subject, err
 }
 
 func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
@@ -55,11 +55,11 @@ func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 	vertices, err := getVerticesFromQuery(cosmos, query)
 
 	if err != nil {
-		return subject, err
+		return model.Subject{}, err
 	}
 
 	if len(vertices) == 0 {
-		return subject, errors.New("There is no vertex in the response")
+		return model.Subject{}, errors.New("There is no vertex in the response")
 	}
 
 	subject, err = vertexToSubject(vertices[0])
@@ -86,7 +86,8 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (m
 		return model.Subject{}, errors.New("There is no vertex in the response")
 	}
 
-	return vertexToSubject(vertices[0])
+	subject, err = vertexToSubject(vertices[0])
+	return subject, err
 }
 
 func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
@@ -146,6 +147,7 @@ func getVerticesFromQuery(cosmos gremcos.Cosmos, query interfaces.Vertex) ([]api
 
 	if err != nil {
 		fmt.Println("Failed to convert response to vertices")
+		return nil, err
 	}
 
 	return vertices, err
