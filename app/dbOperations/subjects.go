@@ -117,18 +117,16 @@ func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interf
 }
 
 func getVertexByName(cosmos gremcos.Cosmos, name string) (api.Vertex, error) {
-	var vertex api.Vertex
-
 	g := api.NewGraph("g")
 	query := g.V().HasLabel(subjectLabel).Has("name", name)
 	vertices, err := getVerticesFromQuery(cosmos, query)
 
 	if err != nil {
-		return vertex, err
+		return api.Vertex{}, err
 	}
 
 	if len(vertices) == 0 {
-		return vertex, errors.New("There is no vertex in the response")
+		return api.Vertex{}, errors.New("There is no vertex in the response")
 	}
 
 	return vertices[0], err
