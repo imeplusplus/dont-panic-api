@@ -12,12 +12,12 @@ import (
 )
 
 const (
-	label = "subject"
+	subjectLabel = "subject"
 )
 
 func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 	g := api.NewGraph("g")
-	query := g.V().HasLabel(label)
+	query := g.V().HasLabel(subjectLabel)
 	vertices, err := getVerticesFromQuery(cosmos, query)
 
 	if err != nil {
@@ -49,7 +49,7 @@ func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 
 	g := api.NewGraph("g")
 
-	query := g.AddV(label).Property("partitionKey", label)
+	query := g.AddV(subjectLabel).Property("partitionKey", subjectLabel)
 	query = addVertexProperties(query, subject)
 
 	vertices, err := getVerticesFromQuery(cosmos, query)
@@ -91,7 +91,7 @@ func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (m
 
 func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
 	g := api.NewGraph("g")
-	query := g.V().HasLabel(label).Has("name", name).Drop()
+	query := g.V().HasLabel(subjectLabel).Has("name", name).Drop()
 
 	_, err := cosmos.ExecuteQuery(query)
 
@@ -119,7 +119,7 @@ func getVertexByName(cosmos gremcos.Cosmos, name string) (api.Vertex, error) {
 	var vertex api.Vertex
 
 	g := api.NewGraph("g")
-	query := g.V().HasLabel(label).Has("name", name)
+	query := g.V().HasLabel(subjectLabel).Has("name", name)
 	vertices, err := getVerticesFromQuery(cosmos, query)
 
 	if err != nil {
