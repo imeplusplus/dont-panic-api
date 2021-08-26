@@ -35,8 +35,7 @@ func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error)
 		return model.Subject{}, err
 	}
 
-	var subject model.Subject
-	subject, err = vertexToSubject(vertex)
+	subject, err := vertexToSubject(vertex)
 	return subject, err
 }
 
