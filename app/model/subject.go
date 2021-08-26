@@ -1,10 +1,9 @@
 package model
 
 type Subject struct {
-	Id           string   `json:"id"`
-	Name         string   `json:"name"`
-	References   []string `json:"references"`
 	Difficulty   int      `json:"difficulty"`
+	Name         string   `json:"name"`
 	Category     string   `json:"category"`
-	PartitionKey string   `json:"partitionKey"`
+	References   []string `json:"references"`
+	Dependencies []string `json:"dependencies"`
 }

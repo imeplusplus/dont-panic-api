@@ -11,20 +11,14 @@ import (
 	"github.com/imeplusplus/dont-panic-api/app/model"
 )
 
+const (
+	subjectLabel = "subject"
+)
+
 func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 	g := api.NewGraph("g")
-	query := g.V().HasLabel("subject")
-
-	res, err := cosmos.ExecuteQuery(query)
-
-	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
-		return nil, err
-	}
-
-	response := api.ResponseArray(res)
-	vertices, err := response.ToVertices()
+	query := g.V().HasLabel(subjectLabel)
+	vertices, err := getVerticesFromQuery(cosmos, query)
 
 	if err != nil {
 		return nil, err
@@ -35,18 +29,14 @@ func GetSubjects(cosmos gremcos.Cosmos) ([]model.Subject, error) {
 }
 
 func GetSubjectByName(cosmos gremcos.Cosmos, name string) (model.Subject, error) {
-	var subject model.Subject
-	g := api.NewGraph("g")
-	query := g.V().HasLabel("subject").Has("name", name)
+	vertex, err := getVertexByName(cosmos, name)
 
-	res, err := cosmos.ExecuteQuery(query)
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
-		return subject, err
+		return model.Subject{}, err
 	}
 
-	return getSubjectFromResponse(res)
+	subject, err := vertexToSubject(vertex)
+	return subject, err
 }
 
 func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject, error) {
@@ -58,42 +48,50 @@ func CreateSubject(cosmos gremcos.Cosmos, subject model.Subject) (model.Subject,
 
 	g := api.NewGraph("g")
 
-	query := g.AddV("subject").Property("partitionKey", "subject")
+	query := g.AddV(subjectLabel).Property("partitionKey", subjectLabel)
 	query = addVertexProperties(query, subject)
 
-	res, err := cosmos.ExecuteQuery(query)
+	vertices, err := getVerticesFromQuery(cosmos, query)
+
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		// logger.Error().Err(err).Msg("Failed to execute gremlin command")
-		return subject, err
+		return model.Subject{}, err
 	}
 
-	return getSubjectFromResponse(res)
+	if len(vertices) == 0 {
+		return model.Subject{}, errors.New("There is no vertex in the response")
+	}
+
+	subject, err = vertexToSubject(vertices[0])
+	return subject, err
 }
 
 func UpdateSubject(cosmos gremcos.Cosmos, subject model.Subject, name string) (model.Subject, error) {
-	oldSubject, err := GetSubjectByName(cosmos, name)
+	oldSubjectVertex, err := getVertexByName(cosmos, name)
 
 	if err != nil {
-		return model.Subject{}, errors.New("There is no subject with name " + oldSubject.Name)
+		return model.Subject{}, errors.New("There is no subject with name " + name)
 	}
 
 	g := api.NewGraph("g")
-	query := addVertexProperties(g.VByStr(oldSubject.Id), subject)
+	query := addVertexProperties(g.VByStr(oldSubjectVertex.ID), subject)
 
-	res, err := cosmos.ExecuteQuery(query)
+	vertices, err := getVerticesFromQuery(cosmos, query)
+
 	if err != nil {
-		fmt.Println("Failed to execute a gremlin command " + query.String())
-		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
-		return subject, err
+		return model.Subject{}, err
 	}
 
-	return getSubjectFromResponse(res)
+	if len(vertices) == 0 {
+		return model.Subject{}, errors.New("There is no vertex in the response")
+	}
+
+	subject, err = vertexToSubject(vertices[0])
+	return subject, err
 }
 
 func DeleteSubject(cosmos gremcos.Cosmos, name string) error {
 	g := api.NewGraph("g")
-	query := g.V().HasLabel("subject").Has("name", name).Drop()
+	query := g.V().HasLabel(subjectLabel).Has("name", name).Drop()
 
 	_, err := cosmos.ExecuteQuery(query)
 
@@ -117,21 +115,39 @@ func addVertexProperties(vertex interfaces.Vertex, subject model.Subject) interf
 	return vertex
 }
 
-func getSubjectFromResponse(res []interfaces.Response) (model.Subject, error) {
-	var subject model.Subject
+func getVertexByName(cosmos gremcos.Cosmos, name string) (api.Vertex, error) {
+	g := api.NewGraph("g")
+	query := g.V().HasLabel(subjectLabel).Has("name", name)
+	vertices, err := getVerticesFromQuery(cosmos, query)
+
+	if err != nil {
+		return api.Vertex{}, err
+	}
+
+	if len(vertices) == 0 {
+		return api.Vertex{}, errors.New("There is no vertex in the response")
+	}
+
+	return vertices[0], err
+}
+
+func getVerticesFromQuery(cosmos gremcos.Cosmos, query interfaces.Vertex) ([]api.Vertex, error) {
+	res, err := cosmos.ExecuteQuery(query)
+	if err != nil {
+		fmt.Println("Failed to execute a gremlin command " + query.String())
+		//logger.Error().Err(err).Msg("Failed to execute a gremlin command")
+		return nil, err
+	}
+
 	response := api.ResponseArray(res)
 	vertices, err := response.ToVertices()
 
-	if len(vertices) == 0 {
-		return subject, errors.New("There is no vertex in the response")
-	}
-
-	subject, err = vertexToSubject(vertices[0])
 	if err != nil {
-		return subject, err
+		fmt.Println("Failed to convert response to vertices")
+		return nil, err
 	}
 
-	return subject, nil
+	return vertices, err
 }
 
 func verticesToSubjects(vertices []api.Vertex) []model.Subject {
@@ -150,13 +166,10 @@ func verticesToSubjects(vertices []api.Vertex) []model.Subject {
 func vertexToSubject(vertex api.Vertex) (model.Subject, error) {
 	var subject model.Subject
 
-	subject.Id = vertex.ID
-
 	properties := vertex.Properties
 
 	subject.Category = properties["category"][0].Value.AsString()
 	subject.Name = properties["name"][0].Value.AsString()
-	subject.PartitionKey = properties["partitionKey"][0].Value.AsString()
 	subject.Difficulty = int(properties["difficulty"][0].Value.AsInt32())
 	for _, p := range properties["references"] {
 		subject.References = append(subject.References, p.Value.AsString())
